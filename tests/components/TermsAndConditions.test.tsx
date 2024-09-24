@@ -3,31 +3,33 @@ import TermsAndConditions from "../../src/components/TermsAndConditions";
 import userEvent from "@testing-library/user-event";
 
 describe("TermsAndConditions", () => {
-  it("should render with correct text and initial state", () => {
+  function renderComponent() {
     render(<TermsAndConditions />);
+    return {
+      heading: screen.getByRole("heading"),
+      checkbox: screen.getByRole("checkbox"),
+      button: screen.getByRole("button"),
+    };
+  }
 
-    const heading = screen.getByRole("heading");
-    expect(heading).toBeInTheDocument();
+  it("should render with correct text and initial state", () => {
+    const { heading, checkbox, button } = renderComponent();
+
     expect(heading).toHaveTextContent(/terms & conditions/i);
-
-    const checkbox = screen.getByRole("checkbox");
-    expect(checkbox).toBeInTheDocument();
     expect(checkbox).not.toBeChecked();
-
     // const button = screen.getByRole('button', {name: /submit/i}) // optional filtering
-    const button = screen.getByRole("button");
-    expect(button).toBeInTheDocument();
     expect(button).toBeDisabled();
   });
 
   it("should enable the button once the checbox is checked", async () => {
+    const { checkbox, button } = renderComponent();
     render(<TermsAndConditions />);
 
-    const checkbox = screen.getByRole("checkbox");
     const user = userEvent.setup();
     await user.click(checkbox);
-    const button = screen.getByRole("button");
 
     expect(button).toBeEnabled();
   });
 });
+
+// when you use getBy** .tbinthedocument isn't needed anymore cuz it'd throw an error. and difference btw getBY* and queryBy*?
