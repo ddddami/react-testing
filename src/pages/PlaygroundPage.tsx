@@ -1,7 +1,7 @@
-import ToastDemo from "../components/ToastDemo";
+import OrderStatusSelector from "../components/OrderStatusSelector";
 
 const PlaygroundPage = () => {
-  return <ToastDemo />;
+  return <OrderStatusSelector onChange={console.log} />;
 };
 
 export default PlaygroundPage;
