@@ -5,25 +5,23 @@ import OrderStatusSelector from "../../src/components/OrderStatusSelector";
 
 describe("OrderStatusSelector", () => {
   const renderComponent = () => {
+    const onChange = vi.fn();
     render(
       <Theme>
-        <OrderStatusSelector onChange={vi.fn()} />
+        <OrderStatusSelector onChange={onChange} />
       </Theme>
     );
 
     return {
       trigger: screen.getByRole("combobox"),
       getOptions: () => screen.getAllByRole("option"),
+      getOption: (label: RegExp) => screen.getByRole("option", { name: label }),
       user: userEvent.setup(),
+      onChange,
     };
   };
   it("should render New as the default value", () => {
     const { trigger } = renderComponent();
-    render(
-      <Theme>
-        <OrderStatusSelector onChange={vi.fn()} />
-      </Theme>
-    );
 
     expect(trigger).toHaveTextContent(/new/i);
   });
@@ -41,5 +39,41 @@ describe("OrderStatusSelector", () => {
     expect(labels).toEqual(
       expect.arrayContaining(["Processed", "New", "Fulfilled"])
     );
+  });
+
+  it.each([
+    {
+      label: /processed/i,
+      value: "processed",
+    },
+    {
+      label: /fulfilled/i,
+      value: "fulfilled",
+    },
+  ])(
+    "should call onChange with $value when $value is selected",
+    async ({ label, value }) => {
+      const { user, trigger, getOption, onChange } = renderComponent();
+      await user.click(trigger);
+
+      const option = await getOption(label);
+      await user.click(option);
+
+      expect(vi.mocked(onChange)).toHaveBeenCalledWith(value);
+    }
+  );
+
+  it("should call onChange 'new' when the New option is selected", async () => {
+    const { user, trigger, getOption, onChange } = renderComponent();
+    await user.click(trigger);
+
+    const processedOption = await getOption(/processed/i);
+    await user.click(processedOption);
+
+    await user.click(trigger);
+    const newOption = await getOption(/new/i);
+    await user.click(newOption);
+
+    expect(vi.mocked(onChange)).toHaveBeenCalledWith("new");
   });
 });
