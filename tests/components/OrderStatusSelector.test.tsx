@@ -56,7 +56,7 @@ describe("OrderStatusSelector", () => {
       const { user, trigger, getOption, onChange } = renderComponent();
       await user.click(trigger);
 
-      const option = await getOption(label);
+      const option = getOption(label);
       await user.click(option);
 
       expect(vi.mocked(onChange)).toHaveBeenCalledWith(value);
@@ -67,11 +67,11 @@ describe("OrderStatusSelector", () => {
     const { user, trigger, getOption, onChange } = renderComponent();
     await user.click(trigger);
 
-    const processedOption = await getOption(/processed/i);
+    const processedOption = getOption(/processed/i);
     await user.click(processedOption);
 
     await user.click(trigger);
-    const newOption = await getOption(/new/i);
+    const newOption = getOption(/new/i);
     await user.click(newOption);
 
     expect(vi.mocked(onChange)).toHaveBeenCalledWith("new");
