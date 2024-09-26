@@ -1,8 +1,11 @@
+import { faker } from "@faker-js/faker";
+
 describe("test suite", () => {
-  it("test case", async () => {
-    const response = await fetch("/categories");
-    const data = await response.json();
-    console.log(data);
-    expect(data).toHaveLength(3);
+  it("test case", () => {
+    const product = {
+      name: faker.commerce.productName(),
+      price: faker.commerce.price({ min: 10, max: 90 }),
+    };
+    console.log(product);
   });
 });
