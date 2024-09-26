@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { Product } from "../entities";
 
 const ProductDetail = ({ productId }: { productId: number }) => {
-  const [product, setProduct] = useState<Product | undefined>(
-    undefined
-  );
+  const [product, setProduct] = useState<Product | undefined>(undefined);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState("");
 

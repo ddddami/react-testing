@@ -1,5 +1,9 @@
-import { render, screen } from "@testing-library/react";
-import { http, HttpResponse } from "msw";
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from "@testing-library/react";
+import { delay, http, HttpResponse } from "msw";
 import ProductDetail from "../../src/components/ProductDetail";
 import { db } from "../mocks/db";
 import { server } from "../mocks/server";
@@ -51,5 +55,32 @@ describe("ProductDetail", () => {
     render(<ProductDetail productId={1} />);
 
     expect(await screen.findByText(/error/i)).toBeInTheDocument();
+  });
+
+  it("should render the loading indicator while data is being fetched", async () => {
+    server.use(
+      http.get("/products/1", async () => {
+        await delay();
+
+        return HttpResponse.json({});
+      })
+    );
+
+    render(<ProductDetail productId={1} />);
+
+    expect(await screen.findByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it("should remove the loading indicator after data has been fetched", async () => {
+    render(<ProductDetail productId={1} />);
+
+    await waitForElementToBeRemoved(() => screen.queryAllByText(/loading/i));
+  });
+
+  it("should remove the loading indicator if an error occurs during data fetching", async () => {
+    server.use(http.get("/products/1", () => HttpResponse.error()));
+    render(<ProductDetail productId={1} />);
+
+    await waitForElementToBeRemoved(() => screen.queryAllByText(/loading/i));
   });
 });
