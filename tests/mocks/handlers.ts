@@ -8,4 +8,12 @@ export const handlers = [
       { id: 3, name: "Groceries" },
     ]);
   }),
+
+  http.get("/products", () => {
+    return HttpResponse.json([
+      { id: 1, name: "Electronics" },
+      { id: 2, name: "Beauty" },
+      { id: 3, name: "Groceries" },
+    ]);
+  }),
 ];
