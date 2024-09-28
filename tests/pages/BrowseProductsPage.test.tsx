@@ -1,31 +1,30 @@
-import { Theme } from "@radix-ui/themes";
 import {
   render,
   screen,
   waitForElementToBeRemoved,
 } from "@testing-library/react";
+import { Theme } from "@radix-ui/themes";
 import userEvent from "@testing-library/user-event";
 import { Category, Product } from "../../src/entities";
 import BrowseProducts from "../../src/pages/BrowseProductsPage";
 import { CartProvider } from "../../src/providers/CartProvider";
-import { db } from "../mocks/db";
+import { db, getProductsByCategory } from "../mocks/db";
 import { simulateDelay, simulateError } from "../utils";
 
 describe("BrowserProducts", () => {
   const categories: Category[] = [];
   const products: Product[] = [];
-  beforeAll(() => {
-    [1, 2].forEach((item) => {
-      const category = db.category.create({
-        name: "category" + item,
-      });
-      categories.push(category);
 
+  beforeAll(() => {
+    [1, 2].forEach(() => {
+      const category = db.category.create();
+      categories.push(category);
       [1, 2].forEach(() => {
         products.push(db.product.create({ categoryId: category.id }));
       });
     });
   });
+
   afterAll(() => {
     const categoryIds = categories.map((c) => c.id);
     db.category.deleteMany({ where: { id: { in: categoryIds } } });
@@ -33,25 +32,6 @@ describe("BrowserProducts", () => {
     const productIds = products.map((p) => p.id);
     db.product.deleteMany({ where: { id: { in: productIds } } });
   });
-
-  const renderComponent = () => {
-    render(
-      <CartProvider>
-        <Theme>
-          <BrowseProducts />
-        </Theme>
-      </CartProvider>
-    );
-
-    return {
-      getProductsSkeleton: () =>
-        screen.queryByRole("progressbar", { name: /products/i }),
-      getCategoriesSkeleton: () =>
-        screen.queryByRole("progressbar", { name: /categories/i }),
-      getCategoriesCombobox: () => screen.queryByRole("combobox"),
-      user: userEvent.setup(),
-    };
-  };
 
   it("should render skeletons while fetching categories", () => {
     simulateDelay("/categories");
@@ -124,45 +104,63 @@ describe("BrowserProducts", () => {
     });
   });
 
-  it("should render only filtered products when a category filter is applied", async () => {
-    const { getCategoriesCombobox, getCategoriesSkeleton, user } =
+  it("should render filtered only products when a category filter is applied", async () => {
+    const { expectProductsToBeInTheDocument, selectCategory } =
       renderComponent();
 
-    await waitForElementToBeRemoved(getCategoriesSkeleton);
-    const combobox = getCategoriesCombobox();
-
-    await user.click(combobox!);
     const selectedCategory = categories[0];
-    await user.click(
-      screen.getByRole("option", { name: selectedCategory.name })
-    );
+    await selectCategory(selectedCategory.name);
 
-    // const filteredProducts = products // or use db.Many to filter
-    //   .map((product) => screen.queryByText(product.name))
-    //   .filter((p) => p !== null);
-    // expect(filteredProducts).toHaveLength(2);
-
-    const products = db.product.findMany({
-      where: { categoryId: { equals: selectedCategory.id } },
-    });
-    const rows = screen.getAllByRole("row");
-    const dataRows = rows.slice(1);
-    expect(dataRows.length).toBe(products.length);
+    const products = getProductsByCategory(selectedCategory.id);
+    expectProductsToBeInTheDocument(products);
   });
 
   it("should render all products when ALL filter is applied", async () => {
-    const { getCategoriesCombobox, getCategoriesSkeleton, user } =
+    const { selectCategory, expectProductsToBeInTheDocument } =
       renderComponent();
 
-    await waitForElementToBeRemoved(getCategoriesSkeleton);
-    const combobox = getCategoriesCombobox();
-
-    await user.click(combobox!);
-    await user.click(screen.getByRole("option", { name: /all/i }));
+    await selectCategory(/all/i);
 
     const products = db.product.getAll();
+    expectProductsToBeInTheDocument(products);
+  });
+});
+
+const renderComponent = () => {
+  render(
+    <CartProvider>
+      <Theme>
+        <BrowseProducts />
+      </Theme>
+    </CartProvider>
+  );
+
+  const getCategoriesSkeleton = () =>
+    screen.queryByRole("progressbar", { name: /categories/i });
+  const getCategoriesCombobox = () => screen.queryByRole("combobox");
+  const user = userEvent.setup();
+
+  const selectCategory = async (name: RegExp | string) => {
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+    const combobox = getCategoriesCombobox();
+    await user.click(combobox!);
+    const option = screen.getByRole("option", { name });
+    await user.click(option);
+  };
+
+  const expectProductsToBeInTheDocument = (products: Product[]) => {
     const rows = screen.getAllByRole("row");
     const dataRows = rows.slice(1);
     expect(dataRows.length).toBe(products.length);
-  });
-});
+  };
+
+  return {
+    getProductsSkeleton: () =>
+      screen.queryByRole("progressbar", { name: /products/i }),
+    getCategoriesSkeleton,
+    getCategoriesCombobox,
+    user,
+    selectCategory,
+    expectProductsToBeInTheDocument,
+  };
+};
