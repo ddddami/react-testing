@@ -15,12 +15,15 @@ describe("BrowserProducts", () => {
   const categories: Category[] = [];
   const products: Product[] = [];
   beforeAll(() => {
-    [1, 2, 3].forEach((item) => {
-      const category = db.category.create({ name: "category" + item });
+    [1, 2].forEach((item) => {
+      const category = db.category.create({
+        name: "category" + item,
+      });
       categories.push(category);
 
-      const product = db.product.create();
-      products.push(product);
+      [1, 2].forEach(() => {
+        products.push(db.product.create({ categoryId: category.id }));
+      });
     });
   });
   afterAll(() => {
@@ -46,6 +49,7 @@ describe("BrowserProducts", () => {
       getCategoriesSkeleton: () =>
         screen.queryByRole("progressbar", { name: /categories/i }),
       getCategoriesCombobox: () => screen.queryByRole("combobox"),
+      user: userEvent.setup(),
     };
   };
 
@@ -95,14 +99,14 @@ describe("BrowserProducts", () => {
   });
 
   it("should render the list of categories", async () => {
-    const { getCategoriesSkeleton, getCategoriesCombobox } = renderComponent();
+    const { getCategoriesSkeleton, getCategoriesCombobox, user } =
+      renderComponent();
 
     await waitForElementToBeRemoved(getCategoriesSkeleton);
 
     const combobox = getCategoriesCombobox();
     expect(combobox).toBeInTheDocument();
 
-    const user = userEvent.setup();
     await user.click(combobox!);
     //  const options =  await screen.findAllByRole("option");
     expect(screen.getByRole("option", { name: /all/i })).toBeInTheDocument();
@@ -118,5 +122,47 @@ describe("BrowserProducts", () => {
     products.forEach((product) => {
       expect(screen.getByText(product.name)).toBeInTheDocument();
     });
+  });
+
+  it("should render only filtered products when a category filter is applied", async () => {
+    const { getCategoriesCombobox, getCategoriesSkeleton, user } =
+      renderComponent();
+
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+    const combobox = getCategoriesCombobox();
+
+    await user.click(combobox!);
+    const selectedCategory = categories[0];
+    await user.click(
+      screen.getByRole("option", { name: selectedCategory.name })
+    );
+
+    // const filteredProducts = products // or use db.Many to filter
+    //   .map((product) => screen.queryByText(product.name))
+    //   .filter((p) => p !== null);
+    // expect(filteredProducts).toHaveLength(2);
+
+    const products = db.product.findMany({
+      where: { categoryId: { equals: selectedCategory.id } },
+    });
+    const rows = screen.getAllByRole("row");
+    const dataRows = rows.slice(1);
+    expect(dataRows.length).toBe(products.length);
+  });
+
+  it("should render all products when ALL filter is applied", async () => {
+    const { getCategoriesCombobox, getCategoriesSkeleton, user } =
+      renderComponent();
+
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+    const combobox = getCategoriesCombobox();
+
+    await user.click(combobox!);
+    await user.click(screen.getByRole("option", { name: /all/i }));
+
+    const products = db.product.getAll();
+    const rows = screen.getAllByRole("row");
+    const dataRows = rows.slice(1);
+    expect(dataRows.length).toBe(products.length);
   });
 });

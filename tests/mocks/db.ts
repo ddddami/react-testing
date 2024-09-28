@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { factory, primaryKey } from "@mswjs/data";
+import { factory, manyOf, oneOf, primaryKey } from "@mswjs/data";
 import { faker } from "@faker-js/faker";
 
 // this is an in memory db that is shared btw our tests
@@ -9,11 +9,13 @@ export const db = factory({
   category: {
     id: primaryKey(faker.number.int),
     name: faker.commerce.department,
+    products: manyOf("category"),
   },
   product: {
     id: primaryKey(faker.number.int),
     name: faker.commerce.productName,
     price: () => faker.number.int({ min: 0, max: 200 }),
     categoryId: () => faker.number.int({ min: 0, max: 200 }),
+    category: oneOf("product"),
   },
 });
