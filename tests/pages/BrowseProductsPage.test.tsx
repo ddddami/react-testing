@@ -3,11 +3,10 @@ import {
   screen,
   waitForElementToBeRemoved,
 } from "@testing-library/react";
-import { Theme } from "@radix-ui/themes";
 import userEvent from "@testing-library/user-event";
 import { Category, Product } from "../../src/entities";
 import BrowseProducts from "../../src/pages/BrowseProductsPage";
-import { CartProvider } from "../../src/providers/CartProvider";
+import AllProviders from "../AllProviders";
 import { db, getProductsByCategory } from "../mocks/db";
 import { simulateDelay, simulateError } from "../utils";
 
@@ -127,13 +126,7 @@ describe("BrowserProducts", () => {
 });
 
 const renderComponent = () => {
-  render(
-    <CartProvider>
-      <Theme>
-        <BrowseProducts />
-      </Theme>
-    </CartProvider>
-  );
+  render(<BrowseProducts />, { wrapper: AllProviders });
 
   const getCategoriesSkeleton = () =>
     screen.queryByRole("progressbar", { name: /categories/i });
