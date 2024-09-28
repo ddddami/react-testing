@@ -1,8 +1,7 @@
-import OrderStatusSelector from "../components/OrderStatusSelector";
-import ProductDetail from "../components/ProductDetail";
+import BrowseProducts from "./BrowseProductsPage";
 
 const PlaygroundPage = () => {
-  return <ProductDetail productId={0} />;
+  return <BrowseProducts />;
 };
 
 export default PlaygroundPage;
