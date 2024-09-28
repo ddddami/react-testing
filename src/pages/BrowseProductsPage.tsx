@@ -8,9 +8,6 @@ function BrowseProducts() {
     number | undefined
   >();
 
-  // if (productsQuery.error)
-  // return <div>Error: {productsQuery.error.message}</div>;
-
   return (
     <div>
       <h1>Products</h1>
