@@ -56,6 +56,8 @@ describe("ProductForm", () => {
 
   it.each([
     { scenario: "missing", errorMessage: /required/i },
+    { scenario: "' '", errorMessage: /required/i , name: ' '},
+
     {
       scenario: "longer than 255 characters",
       errorMessage: /255/i,
