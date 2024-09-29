@@ -17,11 +17,9 @@ describe("ProductForm", () => {
 
   it("should render form fields", async () => {
     // render(<ProductForm onSubmit={vi.fn()} />, { wrapper: AllProviders });
-    const { waitForFormToLoad, getInputs } = renderComponent();
+    const { waitForFormToLoad } = renderComponent();
 
-    await waitForFormToLoad();
-
-    const { nameInput, categoryInput, priceInput } = getInputs();
+    const { nameInput, categoryInput, priceInput } = await waitForFormToLoad();
 
     expect(nameInput).toBeInTheDocument();
     expect(priceInput).toBeInTheDocument();
@@ -35,16 +33,21 @@ describe("ProductForm", () => {
       price: 10,
       categoryId: category.id,
     };
-    const { getInputs } = renderComponent(product);
-    await screen.findByRole("form");
-
-    const { categoryInput, nameInput, priceInput } = getInputs();
+    const { waitForFormToLoad } = renderComponent(product);
+    const { categoryInput, nameInput, priceInput } = await waitForFormToLoad();
 
     expect(nameInput).toHaveValue(product.name);
     expect(priceInput).toHaveValue(product.price.toString());
     expect(categoryInput).toHaveTextContent(category.name);
 
     // diff btw tohavetextcontent and tohavevalue. 2nd must be the value, direct child. 1st only looks for the content whether deeply nested, whatever
+  });
+
+  it("should focus the name field", async () => {
+    const { waitForFormToLoad } = renderComponent();
+
+    const { nameInput } = await waitForFormToLoad();
+    expect(nameInput).toHaveFocus();
   });
 });
 
@@ -53,13 +56,14 @@ const renderComponent = (product?: Product) => {
     wrapper: AllProviders,
   });
 
-  const waitForFormToLoad = () => screen.findByRole("form");
+  const waitForFormToLoad = async () => {
+    await screen.findByRole("form");
+    return {
+      nameInput: screen.getByPlaceholderText(/name/i),
+      priceInput: screen.getByPlaceholderText(/price/i),
+      categoryInput: screen.getByRole("combobox", { name: /category/i }),
+    };
+  };
 
-  const getInputs = () => ({
-    nameInput: screen.getByPlaceholderText(/name/i),
-    priceInput: screen.getByPlaceholderText(/price/i),
-    categoryInput: screen.getByRole("combobox", { name: /category/i }),
-  });
-
-  return { waitForFormToLoad, getInputs };
+  return { waitForFormToLoad };
 };
