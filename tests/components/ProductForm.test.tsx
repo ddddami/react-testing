@@ -51,11 +51,21 @@ describe("ProductForm", () => {
     expect(nameInput).toHaveFocus();
   });
 
-  it("should display an error if name is empty", async () => {
+  it.each([
+    { scenario: "name is missing", errorMessage: /required/i },
+    {
+      scenario: "name is longer than 255 characters",
+      errorMessage: /255/i,
+      name: "a".repeat(256),
+    },
+  ])("should display an error if $scenario", async ({ errorMessage, name }) => {
     const { waitForFormToLoad } = renderComponent();
 
     const form = await waitForFormToLoad();
     const user = userEvent.setup();
+    if (name !== undefined) {
+      await user.type(form.nameInput, name);
+    }
     await user.type(form.priceInput, "10"),
       await user.click(form.categoryInput);
     const options = screen.queryAllByRole("option");
@@ -63,7 +73,7 @@ describe("ProductForm", () => {
     await user.click(form.submitButton);
 
     const error = screen.queryByRole("alert");
-    expect(error).toHaveTextContent(/required/i);
+    expect(error).toHaveTextContent(errorMessage);
   });
 });
 
