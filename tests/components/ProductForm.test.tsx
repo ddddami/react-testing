@@ -3,14 +3,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Toaster } from "react-hot-toast";
 import ProductForm from "../../src/components/ProductForm";
 import { Category, Product } from "../../src/entities";
 import AllProviders from "../AllProviders";
 import { db } from "../mocks/db";
 
+let category: Category;
 describe("ProductForm", () => {
-  let category: Category;
-
   beforeAll(() => {
     category = db.category.create();
   });
@@ -99,12 +99,42 @@ describe("ProductForm", () => {
       expectErrorToBeInTheDocument(errorMessage);
     }
   );
+
+  it("should call onSubmit with the correct data", async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+
+    const form = await waitForFormToLoad();
+
+    await form.fill(form.validData);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, ...formData } = form.validData;
+    expect(onSubmit).toHaveBeenCalledWith(formData);
+  });
+
+  it("should render a toast error if submission fails", async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+
+    const form = await waitForFormToLoad();
+    onSubmit.mockRejectedValue({});
+    await form.fill(form.validData);
+
+    const toast = await screen.findByRole("status");
+    expect(toast).toBeInTheDocument();
+    expect(toast).toHaveTextContent(/error/);
+  });
 });
 
 const renderComponent = (product?: Product) => {
-  render(<ProductForm product={product} onSubmit={vi.fn()} />, {
-    wrapper: AllProviders,
-  });
+  const onSubmit = vi.fn();
+  render(
+    <>
+      <Toaster /> <ProductForm product={product} onSubmit={onSubmit} />
+    </>,
+    {
+      wrapper: AllProviders,
+    }
+  );
 
   const waitForFormToLoad = async () => {
     await screen.findByRole("form");
@@ -114,7 +144,7 @@ const renderComponent = (product?: Product) => {
     const categoryInput = screen.getByRole("combobox", { name: /category/i });
     const submitButton = screen.getByRole("button");
     const validData: Product = {
-      categoryId: 1,
+      categoryId: category.id,
       id: 1,
       name: "aaaa",
       price: 10,
@@ -150,5 +180,5 @@ const renderComponent = (product?: Product) => {
     const error = screen.queryByRole("alert");
     expect(error).toHaveTextContent(errorMessage);
   };
-  return { waitForFormToLoad, expectErrorToBeInTheDocument };
+  return { waitForFormToLoad, expectErrorToBeInTheDocument, onSubmit };
 };
