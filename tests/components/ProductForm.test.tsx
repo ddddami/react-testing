@@ -130,6 +130,7 @@ const renderComponent = (product?: Product) => {
       if (product.price !== undefined)
         await user.type(priceInput, product.price.toString());
 
+      await user.tab(); // hacky fix for userActions act warning
       await user.click(categoryInput);
       const options = screen.queryAllByRole("option");
       await user.click(options[0]);
