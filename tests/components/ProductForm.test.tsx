@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProductForm from "../../src/components/ProductForm";
@@ -61,21 +64,14 @@ describe("ProductForm", () => {
   ])(
     "should display an error if name is $scenario",
     async ({ errorMessage, name }) => {
-      const { waitForFormToLoad } = renderComponent();
+      const { waitForFormToLoad, expectErrorToBeInTheDocument } =
+        renderComponent();
 
       const form = await waitForFormToLoad();
-      const user = userEvent.setup();
-      if (name !== undefined) {
-        await user.type(form.nameInput, name);
-      }
-      await user.type(form.priceInput, "10"),
-        await user.click(form.categoryInput);
-      const options = screen.queryAllByRole("option");
-      await user.click(options[0]);
-      await user.click(form.submitButton);
 
-      const error = screen.queryByRole("alert");
-      expect(error).toHaveTextContent(errorMessage);
+      await form.fill({ ...form.validData, name });
+
+      expectErrorToBeInTheDocument(errorMessage);
     }
   );
 
@@ -93,20 +89,14 @@ describe("ProductForm", () => {
   ])(
     "should display an error if price is $scenario",
     async ({ price, errorMessage }) => {
-      const { waitForFormToLoad } = renderComponent();
+      const { waitForFormToLoad, expectErrorToBeInTheDocument } =
+        renderComponent();
 
       const form = await waitForFormToLoad();
-      const user = userEvent.setup();
-      await user.type(form.nameInput, "aaaa");
-      if (price !== undefined) await user.type(form.priceInput, price);
 
-      await user.click(form.categoryInput);
-      const options = screen.queryAllByRole("option");
-      await user.click(options[0]);
-      await user.click(form.submitButton);
+      await form.fill({ ...form.validData, price });
 
-      const error = screen.queryByRole("alert");
-      expect(error).toHaveTextContent(errorMessage);
+      expectErrorToBeInTheDocument(errorMessage);
     }
   );
 });
@@ -118,13 +108,46 @@ const renderComponent = (product?: Product) => {
 
   const waitForFormToLoad = async () => {
     await screen.findByRole("form");
+
+    const nameInput = screen.getByPlaceholderText(/name/i);
+    const priceInput = screen.getByPlaceholderText(/price/i);
+    const categoryInput = screen.getByRole("combobox", { name: /category/i });
+    const submitButton = screen.getByRole("button");
+    const validData: Product = {
+      categoryId: 1,
+      id: 1,
+      name: "aaaa",
+      price: 10,
+    };
+
+    type FormData = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [K in keyof Product]: any;
+    };
+    const fill = async (product: FormData) => {
+      const user = userEvent.setup();
+      if (product.name !== undefined) await user.type(nameInput, product.name);
+      if (product.price !== undefined)
+        await user.type(priceInput, product.price.toString());
+
+      await user.click(categoryInput);
+      const options = screen.queryAllByRole("option");
+      await user.click(options[0]);
+      await user.click(submitButton);
+    };
     return {
-      nameInput: screen.getByPlaceholderText(/name/i),
-      priceInput: screen.getByPlaceholderText(/price/i),
-      categoryInput: screen.getByRole("combobox", { name: /category/i }),
-      submitButton: screen.getByRole("button"),
+      nameInput,
+      priceInput,
+      categoryInput,
+      submitButton,
+      fill,
+      validData,
     };
   };
 
-  return { waitForFormToLoad };
+  const expectErrorToBeInTheDocument = (errorMessage: RegExp) => {
+    const error = screen.queryByRole("alert");
+    expect(error).toHaveTextContent(errorMessage);
+  };
+  return { waitForFormToLoad, expectErrorToBeInTheDocument };
 };
