@@ -171,6 +171,19 @@ describe("ProductForm", () => {
     // expect(toast).toBeInTheDocument();
     // expect(toast).toHaveTextContent(/error/);
   });
+
+  it("should clear the form upon resetting", async () => {
+    const { waitForFormToLoad } = renderComponent();
+    const form = await waitForFormToLoad();
+    await form.fill(form.validData, false);
+
+    const resetButton = screen.getByRole("button", { name: /reset/i });
+    await form.user.click(resetButton);
+
+    expect(form.nameInput).toHaveValue("");
+    expect(form.priceInput).toHaveValue("");
+    expect(form.categoryInput).toHaveValue("");
+  });
 });
 
 const renderComponent = (product?: Product) => {
@@ -190,7 +203,7 @@ const renderComponent = (product?: Product) => {
     const nameInput = screen.getByPlaceholderText(/name/i);
     const priceInput = screen.getByPlaceholderText(/price/i);
     const categoryInput = screen.getByRole("combobox", { name: /category/i });
-    const submitButton = screen.getByRole("button");
+    const submitButton = screen.getByRole("button", { name: /submit/i });
     const validData: Product = {
       categoryId: category.id,
       id: 1,
@@ -202,8 +215,8 @@ const renderComponent = (product?: Product) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       [K in keyof Product]: any;
     };
-    const fill = async (product: FormData) => {
-      const user = userEvent.setup();
+    const user = userEvent.setup();
+    const fill = async (product: FormData, shouldSubmit: boolean = true) => {
       if (product.name !== undefined) await user.type(nameInput, product.name);
       if (product.price !== undefined)
         await user.type(priceInput, product.price.toString());
@@ -213,9 +226,13 @@ const renderComponent = (product?: Product) => {
         await user.click(categoryInput);
         const options = screen.queryAllByRole("option");
         await user.click(options[0]);
+
+        // await userEvent.selectOptions(selectInput, 'optionValue');
       }
-      await user.click(submitButton);
+
+      if (shouldSubmit !== false) await user.click(submitButton);
     };
+
     return {
       nameInput,
       priceInput,
@@ -223,6 +240,7 @@ const renderComponent = (product?: Product) => {
       submitButton,
       fill,
       validData,
+      user,
     };
   };
 
