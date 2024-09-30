@@ -56,7 +56,7 @@ describe("ProductForm", () => {
 
   it.each([
     { scenario: "missing", errorMessage: /required/i },
-    { scenario: "' '", errorMessage: /required/i , name: ' '},
+    { scenario: "' '", errorMessage: /required/i, name: " " },
 
     {
       scenario: "longer than 255 characters",
@@ -101,6 +101,16 @@ describe("ProductForm", () => {
       expectErrorToBeInTheDocument(errorMessage);
     }
   );
+
+  it("should render an error if category is not selected", async () => {
+    const { waitForFormToLoad, expectErrorToBeInTheDocument } =
+      renderComponent();
+
+    const form = await waitForFormToLoad();
+
+    await form.fill({ ...form.validData, categoryId: undefined });
+    expectErrorToBeInTheDocument(/required/i);
+  });
 
   it("should call onSubmit with the correct data", async () => {
     const { waitForFormToLoad, onSubmit } = renderComponent();
@@ -198,10 +208,12 @@ const renderComponent = (product?: Product) => {
       if (product.price !== undefined)
         await user.type(priceInput, product.price.toString());
 
-      await user.tab(); // hacky fix for userActions act warning
-      await user.click(categoryInput);
-      const options = screen.queryAllByRole("option");
-      await user.click(options[0]);
+      if (product.categoryId !== undefined) {
+        await user.tab(); // hacky fix for userActions act warning
+        await user.click(categoryInput);
+        const options = screen.queryAllByRole("option");
+        await user.click(options[0]);
+      }
       await user.click(submitButton);
     };
     return {
