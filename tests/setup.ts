@@ -34,7 +34,7 @@ window.HTMLElement.prototype.releasePointerCapture = vi.fn();
 type AuthState = {
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: User | undefined;
+  user?: User;
 };
 export const mockAuthState = (authState: AuthState) => {
   return vi.mocked(useAuth0).mockReturnValue({
