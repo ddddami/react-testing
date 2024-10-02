@@ -107,7 +107,6 @@ describe("QuantitySelector", () => {
     expect(quantity).not.toBeInTheDocument();
     expect(decrementButton).not.toBeInTheDocument();
     expect(incrementButton).not.toBeInTheDocument();
-    screen.debug();
     // expect(addToCartButton).toBeInTheDocument();
   });
 });

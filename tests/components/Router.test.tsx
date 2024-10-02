@@ -23,12 +23,16 @@ describe("Router", () => {
     expect(
       await screen.findByRole("heading", { name: product.name })
     ).toBeInTheDocument();
-    screen.debug();
     db.product.delete({ where: { id: { equals: product.id } } });
   });
 
   it("should render not found page for invalid routes", () => {
     navigateTo("/INVALID-PAGE");
     expect(screen.getByText(/not found/i)).toBeInTheDocument();
+  });
+
+  it("should render the admin home page for /admin", () => {
+    navigateTo("/admin");
+    expect(screen.getByRole("heading", { name: /admin/i })).toBeInTheDocument();
   });
 });
