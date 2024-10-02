@@ -26,4 +26,9 @@ describe("Router", () => {
     screen.debug();
     db.product.delete({ where: { id: { equals: product.id } } });
   });
+
+  it("should render not found page for invalid routes", () => {
+    navigateTo("/INVALID-PAGE");
+    expect(screen.getByText(/not found/i)).toBeInTheDocument();
+  });
 });
