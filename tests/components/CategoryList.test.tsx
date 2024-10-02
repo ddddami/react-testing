@@ -12,8 +12,8 @@ import { simulateDelay, simulateError } from "../utils";
 describe("CategoryList", () => {
   const categories: Category[] = [];
   beforeAll(() => {
-    [1, 2, 3].forEach(() => {
-      const category = db.category.create();
+    [1, 2, 3].forEach((item) => {
+      const category = db.category.create({ name: "category" + item });
       categories.push(category);
     });
   });
